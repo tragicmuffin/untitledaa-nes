@@ -215,7 +215,7 @@ Forever:
 .noupdate:
   TYA				; restore new flag value from Y											; 2 cycles
   STA ppu_sprite0	; save new flag value for next loop										; 4 cycles
-
+  
   LDA sleeping		; wait for NMI to clear sleep flag										; 4 cycles
   BNE .loop																					; 2/3 cycles (3 on branch)
   
@@ -481,7 +481,7 @@ sprites:
 
 ;; Background nametables ;;
 background:
-  .incbin "untitledaa_Test.nam"
+  .incbin "untitledarpg_Test.nam"
   
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -513,7 +513,7 @@ background:
   
   ; Pattern table 0 - Sprites ($0000-$0FFF), Pattern table 1 - Background ($1000-$1FFF)
   .org $0000
-  .incbin "untitledaa_Test.chr"  ; include 8KB graphics file
+  .incbin "untitledarpg_Test.chr"  ; include 8KB graphics file
   
   
   
