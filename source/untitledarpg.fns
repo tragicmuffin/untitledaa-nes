@@ -1,4 +1,4 @@
-; untitledaa.asm
+; untitledarpg.asm
 se_pause_filter                  = $8296
 HandleInputTwo                   = $C1BA
 txhead_Test3                     = $A0FE
