@@ -192,32 +192,54 @@ InitLoadPalettes:
 Forever:
 ;; NMI has passed, and we've done the post-NMI handling
   INC sleeping		; set sleeping to 1 and loop until NMI sets it back to 0
+
+; When we come back from NMI, we may still be in VBlank, which means the sprite 0 hit flag has not been reset.
+; Wait here for it to be reset.
+.loopWaitForClear:
+  LDA $2002			; read current PPU status
+  AND #%01000000	; check for sprite 0 collision
+  BNE .loopWaitForClear ; loop until flag is clear
   
-; Cycle counting
-; HBlank lasts 21 cycles
-; Worst case scenario: Collision flag is flipped on right after LDA $2002
-; In this case, it will take 2+2+3+2+4+4+3 = 20 cycles to get to next check
-; Afterwards, it will take 4+2+2+2+4+2+4+2+4 = 26 cycles to update $2000 register
-; Thus a total of 20+26 = 46 cycles will be needed
-
-
+; Loop until sprite 0 hit flag is set.
 .loop:
-  LDA $2002			; read current PPU status												; 4 cycles
-  AND #%01000000	; check for sprite 0 collision											; 2 cycles
-  TAY				; save new flag value in Y so we can update ppu_sprite0 later			; 2 cycles
-  BEQ .noupdate		; if new flag is 0, no need to check for transition						; 2/3 cycles (3 on branch)
-  CMP ppu_sprite0 	; compare to last state of sprite 0 collision flag from previous read	; 4 cycles
-  BEQ .noupdate		; if flag was the same last time we checked, do nothing					; 2/3 cycles (3 on branch)
-  ; if set (0->1 transition), update background pattern table
-  LDA ppu_cr1		; get current state of PPUCTRL											; 4 cycles
-  EOR #%00010000	; flip background pattern table bit (to sprite pattern table)			; 2 cycles
-  STA $2000			; set new background pattern table (this is changed back at next NMI)	; 4 cycles
-.noupdate:
-  TYA				; restore new flag value from Y											; 2 cycles
-  STA ppu_sprite0	; save new flag value for next loop										; 4 cycles
+  LDA $2002			; read current PPU status
+  AND #%01000000	; check for sprite 0 collision
+  BEQ .loop			; loop until a collision occurs
+  LDA ppu_cr1		; get current state of PPUCTRL     *(could save 2 cycles here by using zero-page addressing)
+  EOR #%00010000	; flip background pattern table bit (to sprite pattern table)
+  STA $2000			; set new background pattern table (this is changed back at next NMI)
+
+
+; We can be sure that the sprite 0 collision above will happen before NMI, 
+;   so we don't need to check for NMI until the collision handling is finished.
+.loopNMI:
+  LDA sleeping
+  BNE .loopNMI
+
+
+
+
+
+
+
+;;;;OLD LOOP;;;;
+; .loop:
+  ; LDA $2002			; read current PPU status												; 4 cycles
+  ; AND #%01000000	; check for sprite 0 collision											; 2 cycles
+  ; TAY				; save new flag value in Y so we can update ppu_sprite0 later			; 2 cycles
+  ; BEQ .noupdate		; if new flag is 0, no need to check for transition						; 2/3 cycles (3 on branch)
+  ; CMP ppu_sprite0 	; compare to last state of sprite 0 collision flag from previous read	; 4 cycles
+  ; BEQ .noupdate		; if flag was the same last time we checked, do nothing					; 2/3 cycles (3 on branch)
+  ; ; if set (0->1 transition), update background pattern table
+  ; LDA ppu_cr1		; get current state of PPUCTRL											; 4 cycles
+  ; EOR #%00010000	; flip background pattern table bit (to sprite pattern table)			; 2 cycles
+  ; STA $2000			; set new background pattern table (this is changed back at next NMI)	; 4 cycles
+; .noupdate:
+  ; TYA				; restore new flag value from Y											; 2 cycles
+  ; STA ppu_sprite0	; save new flag value for next loop										; 4 cycles
   
-  LDA sleeping		; wait for NMI to clear sleep flag										; 4 cycles
-  BNE .loop																					; 2/3 cycles (3 on branch)
+  ; LDA sleeping		; wait for NMI to clear sleep flag										; 4 cycles
+  ; BNE .loop																					; 2/3 cycles (3 on branch)
   
 ;; NMI is done. The following code will run once after NMI.
   JSR ReadControllerOne
@@ -471,17 +493,17 @@ Debug_Probe:
  ; First color in each 4-color block is used as the transparency color, usually left as $0F.
  ; Any sprite pixel assigned the transparency color will let background pass through.
 palette:
-  .db $0F,$00,$30,$01,  $0F,$17,$28,$38,  $0F,$3F,$3D,$2D,  $0F,$27,$37,$17			; background palette
+  .db $0F,$00,$3F,$01,  $0F,$17,$28,$38,  $0F,$3F,$3D,$2D,  $0F,$27,$37,$17			; background palette
   .db $0F,$07,$01,$08,  $0F,$07,$3E,$00,  $0F,$38,$16,$06,  $0F,$27,$3F,$17			; sprite palette
 
   
 ;; Sprites ;;
 sprites:
-  .db $CF, $01, %00000011, $F8  ; sprite 0: used for pattern table switching
+  .db $CF, $01, %00000011, $D8  ; sprite 0: used for pattern table switching
 
 ;; Background nametables ;;
 background:
-  .incbin "untitledarpg_Test.nam"
+  .incbin "untitledarpg_TestOpaque.nam"
   
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
