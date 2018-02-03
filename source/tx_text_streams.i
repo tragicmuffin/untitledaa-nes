@@ -1,9 +1,10 @@
 ; Text streams
 
-  ; Test 1234
+  ; Test 1234 / 56
 txhead_Test0:  ; prints TEST starting at tile $214D = (10, 13)
   .db $22, $4D
-  .db $F0, 4, $63, $64, $65, $66, $FF
+  .db $F0, 4, $63, $64, $65, $66, $FE
+  .db $F0, 2, $67, $68, $FF
   
 txhead_Test1:
   .db $20, $CA
@@ -32,8 +33,13 @@ txhead_Test3:
   .db $FE, $FE, $FE, $FE ; scrolls after 20 newlines
   .db $FF
   
-txhead_TestText:
-  .db $20, $C6
+txhead_TestText_NT0:
+  .db $23, $96
+  .db $F0, 4, $ED, $DE, $EC, $ED
+  .db $FF
+  
+txhead_TestText_NT1:
+  .db $27, $96
   .db $F0, 4, $ED, $DE, $EC, $ED
   .db $FF
   

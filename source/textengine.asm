@@ -139,7 +139,8 @@ text_streams:
   .dw txhead_Test1
   .dw txhead_Test2
   .dw txhead_Test3
-  .dw txhead_TestText
+  .dw txhead_TestText_NT0
+  .dw txhead_TestText_NT1
   
   
 ;; Text stream aliases
@@ -147,4 +148,5 @@ tx_Test0	= $00
 tx_Test1	= $01
 tx_Test2	= $02
 tx_Test3	= $03
-tx_TestText	= $04
+tx_TestText_NT0	= $04
+tx_TestText_NT1	= $05
